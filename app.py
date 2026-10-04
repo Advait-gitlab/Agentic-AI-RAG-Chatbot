@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 
 from rag.graph import build_graph
 
@@ -35,6 +36,10 @@ class ChatResponse(BaseModel):
     grounded: bool
     confidence: float
     contexts: list[ContextChunk]
+
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse(url="/docs")
 
 @app.get("/health")
 def health():
