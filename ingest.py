@@ -1,3 +1,7 @@
+import time
+
+from pinecone import Pinecone, ServerlessSpec
+
 import os
 import re
 
@@ -35,7 +39,27 @@ def load_chunks(path: str) -> list[dict]:
             chunks.append({"id": f"p{page_no}-c{i}", "text": piece, "page": page_no})
     return chunks
 
+def ensure_index(pc: Pinecone):
+    existing = {i["name"] for i in pc.list_indexes()}
+    if config.INDEX_NAME not in existing:
+        print(f"Creating index {config.INDEX_NAME}")
+        pc.create_index(
+            name=config.INDEX_NAME,
+            dimension=config.EMBED_DIM,
+            metric="cosine",
+            spec=ServerlessSpec(cloud="aws", region="us-east-1"),
+        )
+    while not pc.describe_index(config.INDEX_NAME).status["ready"]:
+        time.sleep(2)
+    return pc.Index(config.INDEX_NAME)
+
+def main():
+    pc = Pinecone(api_key=config.PINECONE_API_KEY)
+    chunks = load_chunks(download_pdf())
+    print(f"{len(chunks)} chunks from PDF")
+    index = ensure_index(pc)
+    print(index.describe_index_stats())
+
 
 if __name__ == "__main__":
-    chunks = load_chunks(download_pdf())
-    print(f"{len(chunks)} chunks")
+    main()
