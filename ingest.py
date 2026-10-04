@@ -11,6 +11,10 @@ from pypdf import PdfReader
 
 from rag import config
 
+import argparse
+
+EMBED_BATCH = 96   
+UPSERT_BATCH = 100
 
 def download_pdf() -> str:
     path = os.path.abspath(config.PDF_PATH)
@@ -54,10 +58,35 @@ def ensure_index(pc: Pinecone):
     return pc.Index(config.INDEX_NAME)
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--reset", action="store_true", help="delete all vectors before ingesting")
+    args = ap.parse_args()
+
     pc = Pinecone(api_key=config.PINECONE_API_KEY)
     chunks = load_chunks(download_pdf())
     print(f"{len(chunks)} chunks from PDF")
     index = ensure_index(pc)
+    if args.reset:
+        index.delete(delete_all=True)
+
+    for i in range(0, len(chunks), EMBED_BATCH):
+        batch = chunks[i : i + EMBED_BATCH]
+        emb = pc.inference.embed(
+            model=config.EMBED_MODEL,
+            inputs=[c["text"] for c in batch],
+            parameters={"input_type": "passage", "truncate": "END"},
+        )
+        vectors = [
+            {
+                "id": c["id"],
+                "values": e.values,
+                "metadata": {"text": c["text"], "page": c["page"]},
+            }
+            for c, e in zip(batch, emb)
+        ]
+        for j in range(0, len(vectors), UPSERT_BATCH):
+            index.upsert(vectors=vectors[j : j + UPSERT_BATCH])
+        print(f"embedded and upserted {min(i + EMBED_BATCH, len(chunks))}/{len(chunks)}")
     print(index.describe_index_stats())
 
 
