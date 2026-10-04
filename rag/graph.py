@@ -37,8 +37,29 @@ def build_graph():
         ]
         return {"candidates": cands}
 
+    def rerank(state: RAGState) -> RAGState:
+        cands = state["candidates"]
+        if not cands:
+            return {"contexts": []}
+        rr = pc.inference.rerank(
+            model=config.RERANK_MODEL,
+            query=state["question"],
+            documents=[{"id": c["id"], "text": c["text"]} for c in cands],
+            rank_fields=["text"],
+            top_n=config.RERANK_TOP_N,
+            return_documents=False,
+        )
+        contexts = []
+        for item in rr.data:
+            c = dict(cands[item.index])
+            c["rerank_score"] = float(item.score)
+            contexts.append(c)
+        return {"contexts": contexts}
+
     g = StateGraph(RAGState)
     g.add_node("retrieve", retrieve)
+    g.add_node("rerank", rerank)
     g.add_edge(START, "retrieve")
+    g.add_edge("retrieve", "rerank")
     g.add_edge("retrieve", END)
     return g.compile()
