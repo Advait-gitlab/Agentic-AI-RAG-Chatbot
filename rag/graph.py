@@ -16,6 +16,7 @@ Rules:
 - Cite passages inline like [1], [2].
 - If the passages contain relevant information, answer with what they say, even if it only covers part of the question, and state what is not covered.
 - Only if the passages contain nothing relevant to the question, reply with exactly: {NOT_FOUND}
+- State only what the passages say. Do not add comparisons, implications or contrasts that the passages do not state.
 - Be concise and direct."""
 
 class RAGState(TypedDict, total=False):
