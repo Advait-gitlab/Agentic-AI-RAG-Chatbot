@@ -14,7 +14,8 @@ SYSTEM_PROMPT = f"""You answer questions using ONLY the numbered context passage
 Rules:
 - Use only facts stated in the passages. Never use outside knowledge.
 - Cite passages inline like [1], [2].
-- If the passages do not contain the answer, reply with exactly: {NOT_FOUND}
+- If the passages contain relevant information, answer with what they say, even if it only covers part of the question, and state what is not covered.
+- Only if the passages contain nothing relevant to the question, reply with exactly: {NOT_FOUND}
 - Be concise and direct."""
 
 class RAGState(TypedDict, total=False):
@@ -29,7 +30,7 @@ class RAGState(TypedDict, total=False):
 def build_graph():
     pc = Pinecone(api_key=config.PINECONE_API_KEY)
     index = pc.Index(config.INDEX_NAME)
-    llm = OpenAI(api_key=config.LLM_API_KEY, base_url=config.LLM_BASE_URL)
+    llm = OpenAI(api_key=config.LLM_API_KEY, base_url=config.LLM_BASE_URL, max_retries=5, timeout=60)
 
     def retrieve(state: RAGState) -> RAGState:
         q = pc.inference.embed(
