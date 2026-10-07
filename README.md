@@ -76,15 +76,14 @@ Leave this terminal open. When you see `Uvicorn running on http://127.0.0.1:8000
 
 ### 5. Ask a question
 
-1. Open **http://127.0.0.1:8000** in your browser. It opens the interactive API page.
-2. Click the green **POST /chat** bar to expand it.
-3. Click **Try it out** (top right of that section).
-4. In the **Request body** box, replace the text with your question:
-```
-   {"question": "What is agentic AI?"}
-```
-5. Click the blue **Execute** button.
-6. Scroll down to **Server response**. The answer is in the **Response body**, in the `answer` field.
+1. Open **http://127.0.0.1:8000** in your browser. The chat page opens.
+2. Type a question in the box at the bottom, or click one of the example questions, and press **Enter** (or click **Send**).
+3. The answer appears in the chat after a few seconds. Under it you will see:
+   - a green **Grounded in eBook** badge with a confidence score, or an amber **Not found in eBook** badge if the question was refused
+   - a **Sources** link. Click it to see the exact eBook passages the answer was built from. The numbers `[1]`, `[2]` in the answer match the numbered passages.
+
+The raw API is also available at **http://127.0.0.1:8000/docs**, where you can try `POST /chat`
+directly.
 
 Prefer the command line? In a second terminal:
 
@@ -168,6 +167,7 @@ rag/config.py               settings
 rag/graph.py                LangGraph pipeline
 scripts/sample_queries.py   runs the sample questions
 docs/sample_queries.md      sample questions with real outputs
+static/index.html   chat page
 ```
 
 ## Troubleshooting
